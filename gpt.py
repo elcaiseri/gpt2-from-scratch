@@ -7,8 +7,6 @@ import torch.nn.functional as F
 from gpt_utils.utils import Conv1D, NewGELUActivation
 from gpt_config.config import GPT2Config
 
-from gpt_encoder.tokenizer import GPT2Tokenizer
-
 # ------ HuggingFace Imports for Test------
 from transformers import AutoModelForCausalLM
 
