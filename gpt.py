@@ -7,6 +7,8 @@ import torch.nn.functional as F
 from gpt_utils.utils import Conv1D, NewGELUActivation
 from gpt_config.config import GPT2Config
 
+from gpt_encoder.tokenizer import GPT2Tokenizer
+
 # ------ HuggingFace Imports for Test------
 from transformers import AutoModelForCausalLM
 
@@ -34,6 +36,27 @@ class GPT2LMHeadModel(nn.Module):
         model.load_state_dict(auto_model.state_dict(), strict=False)
         
         return model
+    
+    @torch.no_grad()
+    def generate(self, input_ids, max_length=50, temperature=0.7, do_sample=False):
+        assert temperature > 0, "Temperature must be greater than 0"
+        assert input_ids.dim() == 2, "Input IDs must be a 2D tensor"
+        _, input_len = input_ids.size()
+        assert input_len < max_length, "Prompt length exceeds maximum length"
+
+        for _ in range(max_length - input_len):
+            logits = self(input_ids)
+            next_token_logits = logits[:, -1, :] / temperature
+
+            if do_sample:
+                probs = F.softmax(next_token_logits, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1)
+            else:
+                next_token = torch.argmax(next_token_logits, dim=-1, keepdim=True)
+
+            input_ids = torch.cat((input_ids, next_token), dim=1)
+
+        return input_ids
 
 class GPT2Model(nn.Module):
     def __init__(self, vocab_size, n_ctx, n_embd, n_layer, n_head):
