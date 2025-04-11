@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from gpt_utils.utils import Conv1D, NewGELUActivation, GPT2Config
+from gpt_utils.utils import Conv1D, NewGELUActivation
+from gpt_config.config import GPT2Config
 
 # ------ HuggingFace Imports for Test------
 from transformers import AutoModelForCausalLM

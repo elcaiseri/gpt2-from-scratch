@@ -36,23 +36,5 @@ class Conv1D(nn.Module):
         return x
     
     def __repr__(self):
-        return f"Conv1D(nf={self.nf}, nx={self.weight.size(0)})"
+        return f"{self.__class__.__name__}(nf={self.nf}, nx={self.weight.size(0)})"
     
-class GPT2Config:
-    def __init__(self, 
-                 vocab_size=50257,
-                 n_ctx=1024,
-                 n_embd=768,
-                 n_layer=12,
-                 n_head=12):
-        self.vocab_size = vocab_size
-        self.n_ctx = n_ctx
-        self.n_embd = n_embd
-        self.n_layer = n_layer
-        self.n_head = n_head
-
-    def to_dict(self):
-        return self.__dict__
-
-    def __repr__(self):
-        return f"GPT2Config {self.to_dict()}"
