@@ -4,6 +4,8 @@ This project demonstrates building a GPT-2 model from scratch using PyTorch, ins
 
 ## Features
 - Custom GPT-2 architecture built with PyTorch.
+
+#### TODO:
 - Tokenization and training pipeline.
 - Example usage for text generation.
 
@@ -21,6 +23,10 @@ This project demonstrates building a GPT-2 model from scratch using PyTorch, ins
 2. Install dependencies:
     ```bash
     pip install -r requirements.txt
+    ```
+3. Test model
+    ```bash
+    pytest gpt_test/test.py
     ```
 
 ## References
