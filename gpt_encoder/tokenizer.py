@@ -6,6 +6,8 @@ import json
 import regex as re
 from functools import lru_cache
 
+import torch
+
 @lru_cache()
 def bytes_to_unicode():
     """
@@ -106,7 +108,6 @@ class Encoder:
         text = bytearray([self.byte_decoder[c] for c in text]).decode('utf-8', errors=self.errors)
         return text
 
-
 def get_encoder(vocab_dir, merge_dir):
     with open(vocab_dir, 'r') as f:
         encoder = json.load(f)
@@ -123,11 +124,37 @@ class GPT2Tokenizer:
     def __init__(self, vocab_dir, merge_dir):
         self.encoder = get_encoder(vocab_dir, merge_dir)
 
-    def encode(self, text):
-        return self.encoder.encode(text)
+    def encode(self, text, return_tensors=None):
+        encoded_tokens = self.encoder.encode(text)
+
+        if return_tensors == "pt":
+            encoded_tokens = torch.tensor(encoded_tokens, dtype=torch.long).unsqueeze(0)
+
+        return encoded_tokens
 
     def decode(self, tokens):
         return self.encoder.decode(tokens)
+    
+    @property
+    def vocab_size(self):
+        return len(self.encoder.encoder)
+    
+    @classmethod
+    def from_pretrained(cls, model_name_or_path):
+        if model_name_or_path != "gpt2":
+            raise ValueError(f"Only 'gpt2' is supported, but got '{model_name_or_path}'.")
+
+        base_path = os.path.dirname(__file__)
+        vocab_path = os.path.join(base_path, "vocab.json")
+        merge_path = os.path.join(base_path, "merges.txt")
+
+        if not os.path.isfile(vocab_path):
+            raise FileNotFoundError(f"Missing vocab.json at {vocab_path}")
+        if not os.path.isfile(merge_path):
+            raise FileNotFoundError(f"Missing merges.txt at {merge_path}")
+
+        return cls(vocab_path, merge_path)
+
 
 if __name__ == "__main__":
     vocab_dir = os.path.join(os.path.dirname(__file__), 'vocab.json')
