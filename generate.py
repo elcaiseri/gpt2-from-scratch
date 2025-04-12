@@ -46,3 +46,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# python generate.py "Hello, how are " --model_name gpt2 --from_pretrained gpt2 --max_tokens 100 --temperature 0.7 --do_sample

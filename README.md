@@ -26,8 +26,15 @@ This project demonstrates building a GPT-2 model from scratch using PyTorch, ins
     ```
 3. Test model
     ```bash
-    pytest gpt_test/test.py
+    cd gpt_test/
+    pytest 
     ```
+4. Model generation
+    ```bash
+    python generate.py "Hello, how are " --model_name gpt2 --from_pretrained gpt2 --max_tokens 100 --temperature 0.7 --do_sample
+    ```
+
+
 
 ## References
 - [GPT-2 Paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
