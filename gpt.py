@@ -17,6 +17,9 @@ class GPT2LMHeadModel(nn.Module):
         self.transformer = GPT2Model(vocab_size, n_ctx, n_embd, n_layer, n_head)
         self.lm_head = nn.Linear(n_embd, vocab_size, bias=False)
 
+        # After initializing both modules:
+        self.lm_head.weight = self.transformer.wte.weight
+
     def forward(self, input_ids, position_ids=None):
         hidden_states = self.transformer(input_ids, position_ids)
         logits = self.lm_head(hidden_states)
@@ -55,6 +58,10 @@ class GPT2LMHeadModel(nn.Module):
             input_ids = torch.cat((input_ids, next_token), dim=1)
 
         return input_ids
+    
+    def train(self):
+        # TODO: Implement training logic
+        pass
 
 class GPT2Model(nn.Module):
     def __init__(self, vocab_size, n_ctx, n_embd, n_layer, n_head):
@@ -97,10 +104,11 @@ class GPT2Block(nn.Module):
     def __init__(self, n_embd, n_head):
         super().__init__()
         self.ln_1 = nn.LayerNorm(n_embd, eps=1e-5, elementwise_affine=True)
-        self.ln_2 = nn.LayerNorm(n_embd, eps=1e-5, elementwise_affine=True)
 
         # Self-attention
         self.attn = GPT2Attention(n_embd, n_head)
+
+        self.ln_2 = nn.LayerNorm(n_embd, eps=1e-5, elementwise_affine=True)
 
         # Feed-forward
         self.mlp = GPT2MLP(n_embd)
