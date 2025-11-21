@@ -67,7 +67,7 @@ class GPT2LMHeadModel(nn.Module):
 
         return input_ids
 
-    def train(self):
+    def _train(self):
         # TODO: Implement training logic
         pass
 
