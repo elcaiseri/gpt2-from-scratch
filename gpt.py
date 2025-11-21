@@ -4,11 +4,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from gpt_utils.utils import Conv1D, NewGELUActivation
-from gpt_config.config import GPT2Config
-
 # ------ HuggingFace Imports for Test------
 from transformers import AutoModelForCausalLM
+
+from gpt_config import GPT2Config
+from gpt_models import CausalLMOutput
+from gpt_utils import Conv1D, NewGELUActivation
+
 
 class GPT2LMHeadModel(nn.Module):
     def __init__(self, vocab_size, n_ctx, n_embd, n_layer, n_head):
@@ -20,24 +22,30 @@ class GPT2LMHeadModel(nn.Module):
         # After initializing both modules:
         self.lm_head.weight = self.transformer.wte.weight
 
-    def forward(self, input_ids, position_ids=None):
+    def forward(self, input_ids, position_ids=None) -> tuple | CausalLMOutput:
         hidden_states = self.transformer(input_ids, position_ids)
         logits = self.lm_head(hidden_states)
-        return logits
+        return CausalLMOutput(logits=logits)
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path):
         # Load the model from Hugging Face's pretrained models
         auto_model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path)
-        
+
         config = auto_model.config
 
-        model = cls(config.vocab_size, config.n_ctx, config.n_embd, config.n_layer, config.n_head)  
+        model = cls(
+            config.vocab_size,
+            config.n_ctx,
+            config.n_embd,
+            config.n_layer,
+            config.n_head,
+        )
 
-        model.load_state_dict(auto_model.state_dict(), strict=False)
-        
+        model.load_state_dict(auto_model.state_dict(), strict=True)
+
         return model
-    
+
     @torch.no_grad()
     def generate(self, input_ids, max_length=50, temperature=0.7, do_sample=False):
         assert temperature > 0, "Temperature must be greater than 0"
@@ -58,10 +66,11 @@ class GPT2LMHeadModel(nn.Module):
             input_ids = torch.cat((input_ids, next_token), dim=1)
 
         return input_ids
-    
+
     def train(self):
         # TODO: Implement training logic
         pass
+
 
 class GPT2Model(nn.Module):
     def __init__(self, vocab_size, n_ctx, n_embd, n_layer, n_head):
@@ -84,7 +93,9 @@ class GPT2Model(nn.Module):
 
     def forward(self, input_ids, position_ids=None):
         if position_ids is None:
-            position_ids = torch.arange(input_ids.size(1), dtype=torch.long, device=input_ids.device)
+            position_ids = torch.arange(
+                input_ids.size(1), dtype=torch.long, device=input_ids.device
+            )
             position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
 
         # Input embeddings
@@ -99,7 +110,8 @@ class GPT2Model(nn.Module):
         x = self.ln_f(x)
 
         return x
-    
+
+
 class GPT2Block(nn.Module):
     def __init__(self, n_embd, n_head):
         super().__init__()
@@ -121,6 +133,7 @@ class GPT2Block(nn.Module):
         x = x + self.mlp(self.ln_2(x))
 
         return x
+
 
 class GPT2Attention(nn.Module):
     def __init__(self, n_embd, n_head):
@@ -149,7 +162,7 @@ class GPT2Attention(nn.Module):
         b, t, c = x.size()
         x = x.view(b, t, self.n_head, self.head_dim)
         return x.transpose(1, 2).contiguous()
-    
+
     def _merge_heads(self, x):
         """
         Merge the last two dimensions (n_head, head_dim) into one dimension (n_embd).
@@ -202,6 +215,7 @@ class GPT2Attention(nn.Module):
 
         return attn_output
 
+
 class GPT2MLP(nn.Module):
     def __init__(self, n_embd):
         super().__init__()
@@ -216,10 +230,15 @@ class GPT2MLP(nn.Module):
         x = self.dropout(x)
         x = self.c_proj(x)
         return x
-    
+
+
 if __name__ == "__main__":
     # Example usage
-    model = GPT2LMHeadModel(vocab_size=50257, n_ctx=1024, n_embd=768, n_layer=12, n_head=12)
-    input_ids = torch.randint(0, 50257, (1, 1024))  # Batch size of 1, sequence length of 1024
+    model = GPT2LMHeadModel(
+        vocab_size=50257, n_ctx=1024, n_embd=768, n_layer=12, n_head=12
+    )
+    input_ids = torch.randint(
+        0, 50257, (1, 1024)
+    )  # Batch size of 1, sequence length of 1024
     logits = model(input_ids)
     print(logits.shape)  # Should be (1, 1024, 50257)
